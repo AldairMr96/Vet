@@ -1,8 +1,10 @@
 package com.mycompany.veterinaria.serviceTest;
 
 import com.mycompany.veterinaria.model.Duenho;
+import com.mycompany.veterinaria.model.Mascota;
 import com.mycompany.veterinaria.repository.IDuenhoRespository;
 import com.mycompany.veterinaria.service.DuenhoService;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -10,6 +12,10 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -18,17 +24,20 @@ public class DuenhoServiceTest {
     @Mock
     private IDuenhoRespository duenhoRespository;
 
+    @Mock
+    private DuenhoService mockDuenho;
+
     @InjectMocks
     private DuenhoService duenhoService;
 
     @BeforeEach
-    public void setUp (){
+    public void setUp() {
         MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void createDuenhoSuccessTest (){
-        Duenho duenho = new Duenho(1L, "12345678", "Juan", "Perez", "3001234567",new ArrayList<>());
+    void createDuenhoSuccessTest() {
+        Duenho duenho = new Duenho(1L, "12345678", "Juan", "Perez", "3001234567", new ArrayList<>());
 
         when(duenhoRespository.save(any())).thenReturn(duenho);
 
@@ -41,6 +50,108 @@ public class DuenhoServiceTest {
         assertEquals(result.getApellidoDuenho(), duenho.getApellidoDuenho());
         assertEquals(result.getCelularDuenho(), duenho.getCelularDuenho());
         assertTrue(result.getMascotas().isEmpty());
+    }
+
+
+    @Test
+    void getDuenhosSuccesTest() {
+        List<Duenho> duenhos = List.of(
+                new Duenho(1L, "12345678", "Juan", "Perez", "3001234567", new ArrayList<>()),
+                new Duenho(2L, "8915246320", "Nicolas", "Paz", "3001234798", new ArrayList<>())
+        );
+        when(duenhoRespository.findAll()).thenReturn(duenhos);
+
+        List<Duenho> result = duenhoService.getDuenhos();
+
+        assertEquals(2, result.size());
+        assertFalse(result.isEmpty());
+        verify(duenhoRespository, times(1)).findAll();
+
+    }
+
+    @Test
+    void getDuenhosEmptyTest() {
+
+        when(duenhoRespository.findAll()).thenReturn(Collections.emptyList());
+
+        List<Duenho> result = duenhoService.getDuenhos();
+
+        verify(duenhoRespository, times(1)).findAll();
+        assertEquals(0, result.size());
+        assertTrue(result.isEmpty());
+
+    }
+
+    @Test
+    void findOneDuenhoNotFoundTest() {
+
+        when(duenhoRespository.findById(any())).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> duenhoService.findOneDuenho(any()));
+        verify(duenhoRespository, times(1)).findById(any());
+
+    }
+    @Test
+    void findDuenhoSuccessTest (){
+
+        Duenho duenho =  new Duenho(1L, "12345678", "Juan", "Perez", "3001234567", new ArrayList<>());
+
+        when(duenhoRespository.findById(any())).thenReturn(Optional.of(duenho));
+
+        Duenho result = duenhoService.findOneDuenho(any());
+
+        assertNotNull(result);
+        assertEquals(duenho.getIdDuenho(), result.getIdDuenho());
+        assertEquals(duenho.getDni(), result.getDni());
+        assertEquals(duenho.getNombreDuenho(), result.getNombreDuenho());
+        assertEquals(duenho.getApellidoDuenho(), result.getApellidoDuenho());
+        assertEquals(0, result.getMascotas().size());
+        assertTrue(result.getMascotas().isEmpty());
+        verify(duenhoRespository, times(1)).findById(any());
+
+    }
+
+
+    @Test
+    void editDuenhoErrorTest (){
+        Long idTest = 1L;
+        Duenho updatedDuenho = new Duenho(idTest, "654321", "Jane", "Smith", "987654321", new ArrayList<>());
+
+        when(mockDuenho.findOneDuenho(idTest)).thenThrow(new EntityNotFoundException("Dueño no encontrado"));
+
+        Exception ex = assertThrows(RuntimeException.class, () -> duenhoService.editDuenho(updatedDuenho));
+        assertEquals("Dueño no encontrado", ex.getMessage());
+
+
+    }
+
+    @Test
+    void editDuenhoSuccessTest (){
+
+    }
+
+    @Test
+    void deleteDuenhoErrorTest (){
+        when(duenhoRespository.existsById(any())).thenReturn(false);
+
+        assertThrows(EntityNotFoundException.class, ()->duenhoService.deleteDuenho(any()));
+        verify(duenhoRespository, times(1)).existsById(any());
+        verify(duenhoRespository, never()).deleteById(any());
+    }
+
+    @Test
+    void deleteDuenhoSuccesTest () {
+        Long idDelete = 1L;
+        Duenho duenho = new Duenho(idDelete, "123456", "John", "Doe", "123456789", new ArrayList<>());
+
+        when(duenhoRespository.existsById(idDelete)).thenReturn(true);
+        doNothing().when(duenhoRespository).deleteById(idDelete);
+
+        duenhoService.deleteDuenho(idDelete);
+
+        verify(duenhoRespository, times(1)).deleteById(idDelete);
+
+
     }
 
 
