@@ -25,7 +25,7 @@ public class DuenhoServiceTest {
     private IDuenhoRespository duenhoRespository;
 
     @Mock
-    private DuenhoService mockDuenho;
+    private DuenhoService duenhoServiceMock;
 
     @InjectMocks
     private DuenhoService duenhoService;
@@ -114,20 +114,43 @@ public class DuenhoServiceTest {
 
     @Test
     void editDuenhoErrorTest (){
-        Long idTest = 1L;
-        Duenho updatedDuenho = new Duenho(idTest, "654321", "Jane", "Smith", "987654321", new ArrayList<>());
 
-        when(mockDuenho.findOneDuenho(idTest)).thenThrow(new EntityNotFoundException("Dueño no encontrado"));
+        Duenho updatedDuenho = new Duenho(1L, "654321", "Jane", "Smith", "987654321", new ArrayList<>());
 
-        Exception ex = assertThrows(RuntimeException.class, () -> duenhoService.editDuenho(updatedDuenho));
-        assertEquals("Dueño no encontrado", ex.getMessage());
+        when(duenhoRespository.findById(updatedDuenho.getIdDuenho())).thenThrow(new EntityNotFoundException("Dueño no encontrado"));
+
+
+        assertThrows(EntityNotFoundException.class, () -> duenhoService.editDuenho(updatedDuenho));
+
+        verify(duenhoRespository, times(1)).findById(updatedDuenho.getIdDuenho());
+        verify(duenhoRespository, times(0)).save(updatedDuenho);
 
 
     }
 
     @Test
     void editDuenhoSuccessTest (){
+        Long duenhoId = 1L;
+        Duenho existingDuenho = new Duenho(duenhoId, "123456", "John", "Doe", "123456789", new ArrayList<>());
+        Duenho updatedDuenho = new Duenho(duenhoId, "654321", "Jane", "Smith", "987654321", new ArrayList<>());
 
+
+        when(duenhoRespository.findById(duenhoId)).thenReturn(Optional.of(existingDuenho));
+        when(duenhoRespository.save(existingDuenho)).thenReturn(updatedDuenho);
+
+
+        Duenho result = duenhoService.editDuenho(updatedDuenho);
+
+
+        assertNotNull(result);
+        assertEquals("654321", result.getDni());
+        assertEquals("Jane", result.getNombreDuenho());
+        assertEquals("Smith", result.getApellidoDuenho());
+        assertEquals("987654321", result.getCelularDuenho());
+
+
+        verify(duenhoRespository, times(1)).findById(duenhoId);
+        verify(duenhoRespository, times(1)).save(existingDuenho);
     }
 
     @Test
