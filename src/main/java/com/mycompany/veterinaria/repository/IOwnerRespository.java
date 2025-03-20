@@ -1,0 +1,1 @@
+package com.mycompany.veterinaria.repository;import com.mycompany.veterinaria.model.Owner;import org.springframework.data.jpa.repository.JpaRepository;import org.springframework.stereotype.Repository;@Repositorypublic interface IOwnerRespository extends JpaRepository<Owner, Long > {}
