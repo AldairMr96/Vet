@@ -130,7 +130,6 @@ public class PetServiceTest {
 
         Pet result = petService.editPet(existPet);
 
-        assertNotNull(result);
         assertEquals(result.getIdPet(), updatePet.getIdPet());
         assertEquals(result.getPetName(), updatePet.getPetName());
         assertEquals(result.getSpecies(), updatePet.getSpecies());
